@@ -99,17 +99,19 @@ read -p "Enter the date or date range (e.g., 2023/11/15 or 2023/11/15-2023/11/17
 # Check if the input contains a hyphen to indicate a date range
 if [[ "$input" == *-* ]]; then
   echo "Date Range Specified"
-  # Date range specified, use the input directly as the range
-  date_range="$input"
-  IFS='-' read -r -a dates <<< "$date_range"
+  IFS='-' read -r start_date end_date <<< "$input"
 
-  # Iterate through the date range and call remove_rtp_files for each date
-  for current_date in "${dates[@]}"; do
+  # Convert dates to seconds since 1970-01-01 00:00:00 UTC
+  start_date_sec=$(date -d "$start_date" +%s)
+  end_date_sec=$(date -d "$end_date" +%s)
+
+  # Iterate over each day in the date range
+  for (( date_sec=$start_date_sec; date_sec<=$end_date_sec; date_sec+=86400 )); do
+    current_date=$(date -d "@$date_sec" +%Y/%m/%d)
     echo "Working on $current_date"
     remove_rtp_files "$current_date" "$dry_run_option" "$backup_option"
   done
 else
   echo "Single Date Specified"
-  # Single date specified, call remove_rtp_files for that date
   remove_rtp_files "$input" "$dry_run_option" "$backup_option"
 fi
